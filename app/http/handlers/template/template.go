@@ -13,6 +13,17 @@ type template struct {
 	*service.ServiceContext
 }
 
+// RegistrationUser godoc
+// @Summary Register a new user
+// @Description Register a new user with the input payload
+// @Tags auth
+// @Accept  json
+// @Produce  json
+// @Param user body models.User true "Register user"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.Response
+// @Failure 500 {object} utils.Response
+// @Router /auth/register [post]
 func (l *template) RegistrationUser(w http.ResponseWriter, r *http.Request) {
 	var reqUser models.User
 	err := json.NewDecoder(r.Body).Decode(&reqUser)
@@ -60,6 +71,17 @@ func (l *template) RegistrationUser(w http.ResponseWriter, r *http.Request) {
 	res.JSONResponse(w)
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Authenticate a user and return a token
+// @Tags auth
+// @Accept  json
+// @Produce  json
+// @Param credentials body models.User true "User credentials"
+// @Success 200 {object} utils.Response{data=models.LoginResponse}
+// @Failure 400 {object} utils.Response
+// @Failure 500 {object} utils.Response
+// @Router /auth/login [post]
 func (l *template) Login(w http.ResponseWriter, r *http.Request) {
 	var req models.User
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -126,6 +148,16 @@ func (l *template) Login(w http.ResponseWriter, r *http.Request) {
 	res.JSONResponse(w)
 }
 
+// Profile godoc
+// @Summary Get user profile
+// @Description Get the profile of the authenticated user
+// @Tags auth
+// @Accept  json
+// @Produce  json
+// @Security ApiKeyAuth
+// @Success 200 {object} utils.Response{data=models.UserResponse}
+// @Failure 500 {object} utils.Response
+// @Router /auth/profile [get]
 func (l *template) Profile(w http.ResponseWriter, r *http.Request) {
 	token := middleware.GetTokenFromContext(r.Context())
 	userData, err := l.TemplateService.GetUserByID(r.Context(), token.ID)

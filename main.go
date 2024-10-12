@@ -3,6 +3,7 @@ package main
 import (
 	"base-api/app"
 	"base-api/constants"
+	_ "base-api/docs"
 	"fmt"
 	"runtime"
 	"time"

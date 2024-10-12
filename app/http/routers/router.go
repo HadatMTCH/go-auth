@@ -4,6 +4,7 @@ import (
 	infra "base-api/infra/context"
 
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 
 // InitialRouter for object routers
 func InitialRouter(infra infra.InfraContextInterface, r *mux.Router) *mux.Router {
+	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 	s := r.PathPrefix("/api").Subrouter()
 	auth := s.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/register", infra.Handler().TemplateHandler.RegistrationUser).Methods(POST)
