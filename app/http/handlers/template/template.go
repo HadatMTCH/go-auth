@@ -1,0 +1,149 @@
+package template
+
+import (
+	"base-api/data/models"
+	"base-api/infra/context/service"
+	"base-api/infra/middleware"
+	"base-api/utils"
+	"encoding/json"
+	"net/http"
+)
+
+type template struct {
+	*service.ServiceContext
+}
+
+func (l *template) RegistrationUser(w http.ResponseWriter, r *http.Request) {
+	var reqUser models.User
+	err := json.NewDecoder(r.Body).Decode(&reqUser)
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusInternalServerError,
+			Data: nil,
+			Err:  utils.STATUS_INTERNAL_ERR,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	utils.PrintStruct(reqUser)
+
+	err = reqUser.Validate()
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusBadRequest,
+			Data: nil,
+			Err:  utils.STATUS_BAD_REQUEST,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	err = l.TemplateService.InsertUser(r.Context(), reqUser)
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusInternalServerError,
+			Data: nil,
+			Err:  utils.STATUS_INTERNAL_ERR,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	res := utils.Response{
+		Code: http.StatusOK,
+		Msg:  "Success Registration.",
+	}
+	res.JSONResponse(w)
+}
+
+func (l *template) Login(w http.ResponseWriter, r *http.Request) {
+	var req models.User
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusInternalServerError,
+			Data: nil,
+			Err:  utils.STATUS_INTERNAL_ERR,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	err = req.ValidateLogin()
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusBadRequest,
+			Data: nil,
+			Err:  utils.STATUS_BAD_REQUEST,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	userData, err := l.TemplateService.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusInternalServerError,
+			Data: nil,
+			Err:  utils.STATUS_INTERNAL_ERR,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	token, err := l.JWTService.GenerateJWTToken(r.Context(), models.JWTRequest{
+		ID:    int(userData.ID),
+		Email: userData.Email,
+		Name:  userData.Username,
+	})
+
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusInternalServerError,
+			Data: nil,
+			Err:  utils.STATUS_INTERNAL_ERR,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	res := utils.Response{
+		Code: http.StatusOK,
+		Data: models.LoginResponse{
+			Id:    int(userData.ID),
+			Token: token,
+		},
+		Msg: "Success Login.",
+	}
+	res.JSONResponse(w)
+}
+
+func (l *template) Profile(w http.ResponseWriter, r *http.Request) {
+	token := middleware.GetTokenFromContext(r.Context())
+	userData, err := l.TemplateService.GetUserByID(r.Context(), token.ID)
+	if err != nil {
+		res := utils.Response{
+			Code: http.StatusInternalServerError,
+			Data: nil,
+			Err:  utils.STATUS_INTERNAL_ERR,
+			Msg:  err.Error(),
+		}
+		res.JSONResponse(w)
+		return
+	}
+
+	res := utils.Response{
+		Code: http.StatusOK,
+		Data: userData,
+		Msg:  "Success Get Profile.",
+	}
+	res.JSONResponse(w)
+}
