@@ -40,5 +40,5 @@ func main() {
 
 	// Initialize logger first
 	log.InitializeLogger(appInfo)
-	app.Execute(getAppInfo())
+	app.Execute(appInfo)
 }
