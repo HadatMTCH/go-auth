@@ -24,7 +24,7 @@ type template struct {
 // @Success 200 {object} utils.Response
 // @Failure 400 {object} utils.Response
 // @Failure 500 {object} utils.Response
-// @Router /auth/register [post]
+// @Router /api/auth/register [post]
 func (l *template) RegistrationUser(c echo.Context) error {
 	var reqUser models.User
 	if err := c.Bind(&reqUser); err != nil {
@@ -71,7 +71,7 @@ func (l *template) RegistrationUser(c echo.Context) error {
 // @Success 200 {object} utils.Response{data=models.LoginResponse}
 // @Failure 400 {object} utils.Response
 // @Failure 500 {object} utils.Response
-// @Router /auth/login [post]
+// @Router /api/auth/login [post]
 func (l *template) Login(c echo.Context) error {
 	var req models.User
 	if err := c.Bind(&req); err != nil {
@@ -135,7 +135,7 @@ func (l *template) Login(c echo.Context) error {
 // @Security ApiKeyAuth
 // @Success 200 {object} utils.Response{data=models.UserResponse}
 // @Failure 500 {object} utils.Response
-// @Router /auth/profile [get]
+// @Router /api/profile [get]
 func (l *template) Profile(c echo.Context) error {
 	token := middleware.GetTokenFromContext(c)
 	userData, err := l.TemplateService.GetUserByID(c.Request().Context(), token.ID)

@@ -60,7 +60,7 @@ definitions:
 info:
   contact: {}
 paths:
-  /auth/login:
+  /api/auth/login:
     post:
       consumes:
       - application/json
@@ -95,33 +95,7 @@ paths:
       summary: Login user
       tags:
       - auth
-  /auth/profile:
-    get:
-      consumes:
-      - application/json
-      description: Get the profile of the authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/utils.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.UserResponse'
-              type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/utils.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get user profile
-      tags:
-      - auth
-  /auth/register:
+  /api/auth/register:
     post:
       consumes:
       - application/json
@@ -149,6 +123,32 @@ paths:
           schema:
             $ref: '#/definitions/utils.Response'
       summary: Register a new user
+      tags:
+      - auth
+  /api/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get the profile of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.UserResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user profile
       tags:
       - auth
 swagger: "2.0"

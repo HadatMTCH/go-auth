@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	"os"
 	"os/signal"
@@ -31,6 +32,8 @@ func New() HTTPServer {
 }
 
 func (h httpServer) initializeRoutes() {
+	h.e.Use(middleware.Logger())
+	h.e.Use(middleware.Recover())
 	routers.InitialRouter(h.infraContext, h.e)
 }
 
