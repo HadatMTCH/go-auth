@@ -7,14 +7,15 @@ import (
 )
 
 type User struct {
-	ID        int64     `json:"id" db:"id" swaggerignore:"true"`
-	Username  string    `json:"username" db:"username" example:"johndoe"`
-	Email     string    `json:"email" db:"email" example:"john@example.com"`
-	Password  string    `json:"password" db:"password" example:"securepassword123"`
-	FullName  string    `json:"full_name" db:"full_name" example:"John Doe"`
-	IsAdmin   bool      `json:"is_admin" db:"is_admin" swaggerignore:"true"`
-	CreatedAt time.Time `json:"created_at" db:"created_at" swaggerignore:"true"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at" swaggerignore:"true"`
+	ID          int64     `json:"id" db:"id" swaggerignore:"true"`
+	Username    string    `json:"username" db:"username" example:"johndoe"`
+	Email       string    `json:"email" db:"email" example:"john@example.com"`
+	Password    string    `json:"password" db:"password" example:"securepassword123"`
+	FullName    string    `json:"full_name" db:"full_name" example:"John Doe"`
+	IsAdmin     bool      `json:"is_admin" db:"is_admin" swaggerignore:"true"`
+	IsSuspended bool      `json:"is_suspended" db:"is_suspended" swaggerignore:"true"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at" swaggerignore:"true"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at" swaggerignore:"true"`
 }
 
 type UserResponse struct {
@@ -70,7 +71,7 @@ func NewUserResponse() *UserResponse {
 	return &UserResponse{}
 }
 
-func (ur *UserResponse) ToResponse(user *User) {
+func (ur *UserResponse) ToResponse(user *User) *UserResponse {
 	ur.ID = user.ID
 	ur.Username = user.Username
 	ur.Email = user.Email
@@ -78,4 +79,5 @@ func (ur *UserResponse) ToResponse(user *User) {
 	ur.IsAdmin = user.IsAdmin
 	ur.CreatedAt = user.CreatedAt
 	ur.UpdatedAt = user.UpdatedAt
+	return ur
 }

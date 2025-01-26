@@ -3,34 +3,26 @@ package routers
 import (
 	infra "base-api/infra/context"
 
-	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
+	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-const (
-	GET   = "GET"
-	POST  = "POST"
-	PUT   = "PUT"
-	PATCH = "PATCH"
-)
+func InitialRouter(infra infra.InfraContextInterface, e *echo.Echo) *echo.Echo {
+	// Swagger
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-// InitialRouter for object routers
-func InitialRouter(infra infra.InfraContextInterface, r *mux.Router) *mux.Router {
-	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
-	s := r.PathPrefix("/api").Subrouter()
-	auth := s.PathPrefix("/auth").Subrouter()
-	auth.HandleFunc("/register", infra.Handler().TemplateHandler.RegistrationUser).Methods(POST)
-	auth.HandleFunc("/login", infra.Handler().TemplateHandler.Login).Methods(POST)
+	// API group
+	api := e.Group("/api")
 
-	profile := s.PathPrefix("/profile").Subrouter()
-	profile.Use(infra.Middleware().TokenMiddleware.TokenAuthorize)
-	profile.HandleFunc("/", infra.Handler().TemplateHandler.Profile).Methods(GET)
+	// Auth routes
+	auth := api.Group("/auth")
+	auth.POST("/register", infra.Handler().TemplateHandler.RegistrationUser)
+	auth.POST("/login", infra.Handler().TemplateHandler.Login)
 
-	// router
-	// s.HandleFunc("/sample", sampleHandler.SampleMethod).Methods(GET)
+	// Profile routes (with middleware)
+	profile := api.Group("/profile")
+	profile.Use(infra.Middleware().TokenMiddleware.TokenAuthorize())
+	profile.GET("", infra.Handler().TemplateHandler.Profile)
 
-	// SubRouter
-	// c := r.PathPrefix("/sample-prefix").Subrouter()
-	// c.HandleFunc("/sample-route", sampleHandler.SampleMethod).Methods(POST)
-	return r
+	return e
 }

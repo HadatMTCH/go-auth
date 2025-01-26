@@ -5,8 +5,9 @@ import (
 	"base-api/infra/context/service"
 	"base-api/infra/middleware"
 	"base-api/utils"
-	"encoding/json"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type template struct {
@@ -24,51 +25,40 @@ type template struct {
 // @Failure 400 {object} utils.Response
 // @Failure 500 {object} utils.Response
 // @Router /auth/register [post]
-func (l *template) RegistrationUser(w http.ResponseWriter, r *http.Request) {
+func (l *template) RegistrationUser(c echo.Context) error {
 	var reqUser models.User
-	err := json.NewDecoder(r.Body).Decode(&reqUser)
-	if err != nil {
+	if err := c.Bind(&reqUser); err != nil {
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
-			Data: nil,
 			Err:  utils.STATUS_INTERNAL_ERR,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
 	utils.PrintStruct(reqUser)
 
-	err = reqUser.Validate()
-	if err != nil {
+	if err := reqUser.Validate(); err != nil {
 		res := utils.Response{
 			Code: http.StatusBadRequest,
-			Data: nil,
 			Err:  utils.STATUS_BAD_REQUEST,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	err = l.TemplateService.InsertUser(r.Context(), reqUser)
-	if err != nil {
+	if err := l.TemplateService.InsertUser(c.Request().Context(), reqUser); err != nil {
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
-			Data: nil,
 			Err:  utils.STATUS_INTERNAL_ERR,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	res := utils.Response{
-		Code: http.StatusOK,
-		Msg:  "Success Registration.",
-	}
-	res.JSONResponse(w)
+	return c.JSON(http.StatusOK, utils.Response{
+		Msg: "Success Registration.",
+	})
 }
 
 // Login godoc
@@ -82,45 +72,37 @@ func (l *template) RegistrationUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} utils.Response
 // @Failure 500 {object} utils.Response
 // @Router /auth/login [post]
-func (l *template) Login(w http.ResponseWriter, r *http.Request) {
+func (l *template) Login(c echo.Context) error {
 	var req models.User
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := c.Bind(&req); err != nil {
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
-			Data: nil,
 			Err:  utils.STATUS_INTERNAL_ERR,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	err = req.ValidateLogin()
-	if err != nil {
+	if err := req.ValidateLogin(); err != nil {
 		res := utils.Response{
 			Code: http.StatusBadRequest,
-			Data: nil,
 			Err:  utils.STATUS_BAD_REQUEST,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	userData, err := l.TemplateService.Login(r.Context(), req.Email, req.Password)
+	userData, err := l.TemplateService.Login(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
-			Data: nil,
 			Err:  utils.STATUS_INTERNAL_ERR,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	token, err := l.JWTService.GenerateJWTToken(r.Context(), models.JWTRequest{
+	token, err := l.JWTService.GenerateJWTToken(c, models.JWTRequest{
 		ID:    int(userData.ID),
 		Email: userData.Email,
 		Name:  userData.Username,
@@ -129,23 +111,19 @@ func (l *template) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
-			Data: nil,
 			Err:  utils.STATUS_INTERNAL_ERR,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	res := utils.Response{
-		Code: http.StatusOK,
+	return c.JSON(http.StatusOK, utils.Response{
 		Data: models.LoginResponse{
 			Id:    int(userData.ID),
 			Token: token,
 		},
 		Msg: "Success Login.",
-	}
-	res.JSONResponse(w)
+	})
 }
 
 // Profile godoc
@@ -158,24 +136,20 @@ func (l *template) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} utils.Response{data=models.UserResponse}
 // @Failure 500 {object} utils.Response
 // @Router /auth/profile [get]
-func (l *template) Profile(w http.ResponseWriter, r *http.Request) {
-	token := middleware.GetTokenFromContext(r.Context())
-	userData, err := l.TemplateService.GetUserByID(r.Context(), token.ID)
+func (l *template) Profile(c echo.Context) error {
+	token := middleware.GetTokenFromContext(c)
+	userData, err := l.TemplateService.GetUserByID(c.Request().Context(), token.ID)
 	if err != nil {
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
-			Data: nil,
 			Err:  utils.STATUS_INTERNAL_ERR,
 			Msg:  err.Error(),
 		}
-		res.JSONResponse(w)
-		return
+		return c.JSON(res.Code, res)
 	}
 
-	res := utils.Response{
-		Code: http.StatusOK,
+	return c.JSON(http.StatusOK, utils.Response{
 		Data: userData,
 		Msg:  "Success Get Profile.",
-	}
-	res.JSONResponse(w)
+	})
 }

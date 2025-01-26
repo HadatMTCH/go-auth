@@ -24,7 +24,7 @@ var (
 
 	// root command
 	RootCommands = &cobra.Command{
-		Use:   "orderfaz-engine",
+		Use:   "go-engine",
 		Short: "Short Description",
 		Long:  "Long Desccription!",
 	}

@@ -34,9 +34,14 @@ func (u *template) Login(ctx context.Context, email, password string) (*models.U
 		return nil, err
 	}
 
+	if data.IsSuspended {
+		return nil, errors.New("account is suspsended, please contact customer service.")
+	}
+
 	userResponse := models.NewUserResponse()
-	userResponse.ToResponse(data)
-	return userResponse, nil
+	userResponseData := userResponse.ToResponse(data)
+
+	return userResponseData, nil
 }
 
 func (u *template) GetUserByID(ctx context.Context, id int) (*models.UserResponse, error) {

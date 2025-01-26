@@ -2,17 +2,17 @@ package template
 
 import (
 	"base-api/infra/context/service"
-	"net/http"
+	"github.com/labstack/echo/v4"
 )
 
 type Template interface {
-	RegistrationUser(w http.ResponseWriter, r *http.Request)
-	Login(w http.ResponseWriter, r *http.Request)
-	Profile(w http.ResponseWriter, r *http.Request)
+	RegistrationUser(c echo.Context) error
+	Login(c echo.Context) error
+	Profile(c echo.Context) error
 }
 
 func New(serviceCtx *service.ServiceContext) Template {
 	return &template{
-		serviceCtx,
+		ServiceContext: serviceCtx,
 	}
 }

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"log"
 	"strings"
 	"time"
@@ -36,13 +37,10 @@ type JWTClaims struct {
 }
 
 type JWTInterface interface {
-	ExtractJWTClaims(ctx context.Context, authBearer string) (claims *JWTClaims, err error)
-	ValidateTokenIssuer(claims *JWTClaims) (err error)
-	ValidateTokenExpire(ctx context.Context, claims *JWTClaims, reqToken string) (err error)
-
-	GetTokenFromRedis(ctx context.Context, id int, authKey string) (string, error)
-	DeleteTokenFromRedis(ctx context.Context, id int, authKey string) error
-	GenerateJWTToken(ctx context.Context, request models.JWTRequest) (string, error)
+	ExtractJWTClaims(c echo.Context) (claims *JWTClaims, err error)
+	ValidateTokenIssuer(claims *JWTClaims) error
+	ValidateTokenExpire(c echo.Context, claims *JWTClaims) error
+	GenerateJWTToken(c echo.Context, request models.JWTRequest) (string, error)
 }
 
 type jwtObj struct {
@@ -57,9 +55,13 @@ func NewJWT(cfg *config.JWTConfig, redis *redis.Client) JWTInterface {
 	}
 }
 
-func (j *jwtObj) ExtractJWTClaims(ctx context.Context, token string) (claims *JWTClaims, err error) {
-	// check authorization
-	splitToken := strings.Split(token, bearer)
+func (j *jwtObj) ExtractJWTClaims(c echo.Context) (claims *JWTClaims, err error) {
+	tokenHeader := c.Request().Header.Get(constants.Authorization)
+	if tokenHeader == "" {
+		return nil, constants.ErrTokenIsRequired
+	}
+
+	splitToken := strings.Split(tokenHeader, bearer)
 	if len(splitToken) != 2 {
 		return nil, constants.ErrTokenIsRequired
 	}
@@ -69,23 +71,20 @@ func (j *jwtObj) ExtractJWTClaims(ctx context.Context, token string) (claims *JW
 		return j.config.Secret, nil
 	})
 
-	if err != nil && err.Error() != constants.ErrKeyIsNotInvalidType.Error() {
+	if err != nil {
 		return nil, err
 	}
 
 	claims = t.Claims.(*JWTClaims)
 
-	// Validate Issuer Token
-	err = j.ValidateTokenIssuer(claims)
-	if err != nil {
+	if err := j.ValidateTokenIssuer(claims); err != nil {
 		return nil, err
 	}
 
-	// Validate token expire
-	err = j.ValidateTokenExpire(ctx, claims, reqToken)
-	if err != nil {
+	if err := j.ValidateTokenExpire(c, claims); err != nil {
 		return nil, err
 	}
+
 	return claims, nil
 }
 
@@ -98,15 +97,15 @@ func (j *jwtObj) ValidateTokenIssuer(claims *JWTClaims) (err error) {
 }
 
 // ValidateTokenExpire is for validate Token Expire
-func (j *jwtObj) ValidateTokenExpire(ctx context.Context, claims *JWTClaims, reqToken string) (err error) {
-	// check token to redis
+func (j *jwtObj) ValidateTokenExpire(c echo.Context, claims *JWTClaims) error {
 	key := AuthKeyUser
-	token, err := j.GetTokenFromRedis(ctx, claims.ID, key)
+	token, err := j.GetTokenFromRedis(c.Request().Context(), claims.ID, key)
 	if err != nil {
 		log.Printf("%s: %s", constants.ErrGetTokenFromRedis, err.Error())
 		return constants.ErrTokenAlreadyExpired
 	}
 
+	reqToken := strings.TrimPrefix(c.Request().Header.Get(constants.Authorization), "Bearer ")
 	if token != reqToken {
 		return constants.ErrTokenReplaced
 	}
@@ -134,7 +133,7 @@ func (j *jwtObj) DeleteTokenFromRedis(ctx context.Context, id int, authKey strin
 	return nil
 }
 
-func (j *jwtObj) GenerateJWTToken(ctx context.Context, request models.JWTRequest) (string, error) {
+func (j *jwtObj) GenerateJWTToken(ctx echo.Context, request models.JWTRequest) (string, error) {
 	JWTSignatureKey := []byte(j.config.Secret)
 	expireTime := time.Now().Add(time.Duration(j.config.TokenLifeTimeHour) * time.Hour)
 
@@ -162,7 +161,7 @@ func (j *jwtObj) GenerateJWTToken(ctx context.Context, request models.JWTRequest
 	}
 
 	// Save token to redis
-	err = j.SaveTokenToRedis(ctx, request.ID, j.config.TokenLifeTimeHour, signedToken, key)
+	err = j.SaveTokenToRedis(ctx.Request().Context(), request.ID, j.config.TokenLifeTimeHour, signedToken, key)
 	if err != nil {
 		err = constants.ErrSaveTokenToRedis
 		return "", err
