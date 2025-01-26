@@ -58,7 +58,7 @@ func New() InfraContextInterface {
 	serviceContext := service.InitServiceContext(repositoryContext, moduleContext, &cfg, rdb)
 
 	// Initialize Handler Context
-	handlercontext := handler.InitHandlerContext(serviceContext)
+	handlercontext := handler.InitHandlerContext(serviceContext, repositoryContext)
 
 	// init middleware ctx
 	tokenMiddleware := middleware.NewTokenMiddleware(serviceContext.JWTService)

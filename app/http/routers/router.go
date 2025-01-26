@@ -2,12 +2,16 @@ package routers
 
 import (
 	infra "base-api/infra/context"
+	"base-api/infra/middleware"
 
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func InitialRouter(infra infra.InfraContextInterface, e *echo.Echo) *echo.Echo {
+	e.Use(middleware.RequestLogger())
+	e.GET("/health", infra.Handler().HealthHandler.Check)
+
 	// Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 

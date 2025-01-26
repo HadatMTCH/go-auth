@@ -4,6 +4,7 @@ import (
 	"base-api/app"
 	"base-api/constants"
 	_ "base-api/docs"
+	"base-api/infra/log"
 	"fmt"
 	"runtime"
 	"time"
@@ -35,5 +36,9 @@ func getAppInfo() *constants.AppInfo {
 }
 
 func main() {
+	appInfo := getAppInfo()
+
+	// Initialize logger first
+	log.InitializeLogger(appInfo)
 	app.Execute(getAppInfo())
 }

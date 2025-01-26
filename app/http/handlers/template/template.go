@@ -3,6 +3,7 @@ package template
 import (
 	"base-api/data/models"
 	"base-api/infra/context/service"
+	"base-api/infra/log"
 	"base-api/infra/middleware"
 	"base-api/utils"
 	"net/http"
@@ -137,9 +138,13 @@ func (l *template) Login(c echo.Context) error {
 // @Failure 500 {object} utils.Response
 // @Router /api/profile [get]
 func (l *template) Profile(c echo.Context) error {
+	logger := log.FromContext(c)
+
+	logger.Info("Starting profile retrieval")
 	token := middleware.GetTokenFromContext(c)
 	userData, err := l.TemplateService.GetUserByID(c.Request().Context(), token.ID)
 	if err != nil {
+		logger.WithField("error", err).Error("Failed to get user")
 		res := utils.Response{
 			Code: http.StatusInternalServerError,
 			Err:  utils.STATUS_INTERNAL_ERR,
@@ -148,6 +153,7 @@ func (l *template) Profile(c echo.Context) error {
 		return c.JSON(res.Code, res)
 	}
 
+	logger.WithField("user_id", userData.ID).Debug("User profile retrieved")
 	return c.JSON(http.StatusOK, utils.Response{
 		Data: userData,
 		Msg:  "Success Get Profile.",

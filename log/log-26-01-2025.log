@@ -1,0 +1,12 @@
+[26-01-2025 15:31:44][ERROR][TraceID:1737880304533245433][GET][/api/profile][Status:500] Server error
+DURATION: 110.2µs
+FILE: /home/hadatskywalker/Documents/boilerplate-go-auth/infra/middleware/logger.go:34
+
+[26-01-2025 15:31:57][ERROR][TraceID:1737880317779306264][GET][/api/profile][Status:500] Server error
+DURATION: 57.615µs
+FILE: /home/hadatskywalker/Documents/boilerplate-go-auth/infra/middleware/logger.go:34
+
+[26-01-2025 15:56:22][INFO][TraceID:1737881782450796360][GET][/health][Status:200] Request processed
+DURATION: 42.324µs
+FILE: /home/hadatskywalker/Documents/boilerplate-go-auth/infra/middleware/logger.go:38
+
