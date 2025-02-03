@@ -4,6 +4,7 @@ import (
 	"base-api/constants"
 	"base-api/data/models"
 	"database/sql"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -39,6 +40,18 @@ func (r *AccountRepository) UpdateSaldo(noRekening string, nominal int64, isTabu
 	operation := "+"
 	jenis := "tabung"
 	if !isTabung {
+		var saldo int64
+		query := `SELECT saldo FROM accounts WHERE no_rekening = $1`
+		err = tx.Get(&saldo, query, noRekening)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return 0, constants.ErrAccountNotFound
+			}
+			return 0, err
+		}
+		if saldo < nominal {
+			return 0, constants.ErrInsufficientBalance
+		}
 		operation = "-"
 		jenis = "tarik"
 	}

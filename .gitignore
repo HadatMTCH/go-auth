@@ -6,3 +6,4 @@ gin-bin
 gin-bin.exe
 debug.log
 base-api
+log

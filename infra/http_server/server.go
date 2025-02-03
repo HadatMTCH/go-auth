@@ -6,11 +6,13 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"github.com/labstack/echo/v4/middleware"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
@@ -32,9 +34,11 @@ func New() HTTPServer {
 }
 
 func (h httpServer) initializeRoutes() {
+	fmt.Println("Initializing routes")
 	h.e.Use(middleware.Logger())
 	h.e.Use(middleware.Recover())
 	routers.InitialRouter(h.infraContext, h.e)
+	fmt.Println("Routes initialized")
 }
 
 func (h httpServer) SetGracefulTimeout() time.Duration {
@@ -54,11 +58,14 @@ func (h httpServer) RunHTTP(cmd *cobra.Command, args []string) error {
 	// Initialize routes
 	h.initializeRoutes()
 
+	fmt.Println("Server is running on port", h.infraContext.Config().Server.Addr)
 	// Start server
 	go func() {
+		fmt.Println("Starting server")
 		if err := h.e.Start(h.infraContext.Config().Server.Addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			h.e.Logger.Fatal("shutting down the server")
 		}
+		fmt.Println("Server started")
 	}()
 
 	// Wait for interrupt signal

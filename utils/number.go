@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 	"strings"
 )
@@ -86,4 +88,39 @@ func CommaSeparated(v float64) string {
 	}
 	parts[j] = strconv.Itoa(int(v))
 	return sign + strings.Join(parts[j:], ",")
+}
+
+func GenerateRandomNumber(length int) (uint64, error) {
+	if length < 1 {
+		return 0, fmt.Errorf("length must be at least 1")
+	}
+	if length > 20 {
+		return 0, fmt.Errorf("length must be less than 19 to fit in int64")
+	}
+
+	// Calculate the range for the first digit (1-9)
+	min := big.NewInt(1)
+	max := big.NewInt(9)
+
+	// Generate first digit (1-9)
+	firstDigit, err := rand.Int(rand.Reader, max.Sub(max, min).Add(max, min))
+	if err != nil {
+		return 0, fmt.Errorf("failed to generate first digit: %v", err)
+	}
+
+	// Generate remaining digits
+	result := firstDigit.Uint64()
+	if length > 1 {
+		// Calculate the range for remaining digits (0-9)
+		max = big.NewInt(10)
+		for i := 1; i < length; i++ {
+			digit, err := rand.Int(rand.Reader, max)
+			if err != nil {
+				return 0, fmt.Errorf("failed to generate digit at position %d: %v", i, err)
+			}
+			result = result*10 + digit.Uint64()
+		}
+	}
+
+	return result, nil
 }

@@ -23,6 +23,13 @@ func InitialRouter(infra infra.InfraContextInterface, e *echo.Echo) *echo.Echo {
 	auth.POST("/register", infra.Handler().TemplateHandler.RegistrationUser)
 	auth.POST("/login", infra.Handler().TemplateHandler.Login)
 
+	// Account routes
+	accounts := api.Group("/accounts")
+	accounts.POST("/register", infra.Handler().AccountHandler.Register)
+	accounts.POST("/tabung", infra.Handler().AccountHandler.Tabung)
+	accounts.POST("/tarik", infra.Handler().AccountHandler.Tarik)
+	accounts.GET("/saldo/:no_rekening", infra.Handler().AccountHandler.GetSaldo)
+
 	// Profile routes (with middleware)
 	profile := api.Group("/profile")
 	profile.Use(infra.Middleware().TokenMiddleware.TokenAuthorize())

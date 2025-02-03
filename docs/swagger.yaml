@@ -1,4 +1,9 @@
 definitions:
+  models.ErrorResponse:
+    properties:
+      remark:
+        type: string
+    type: object
   models.LoginResponse:
     properties:
       id:
@@ -7,6 +12,32 @@ definitions:
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
+    type: object
+  models.RegisterRequest:
+    properties:
+      nama:
+        type: string
+      nik:
+        type: string
+      no_hp:
+        type: string
+    type: object
+  models.RegisterResponse:
+    properties:
+      no_rekening:
+        type: string
+    type: object
+  models.SaldoResponse:
+    properties:
+      saldo:
+        type: integer
+    type: object
+  models.TabungTarikRequest:
+    properties:
+      no_rekening:
+        type: string
+      nominal:
+        type: integer
     type: object
   models.User:
     properties:
@@ -60,6 +91,123 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/accounts/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new customer account with NIK, phone number, and name
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Register a new account
+      tags:
+      - accounts
+  /api/accounts/saldo/{no_rekening}:
+    get:
+      description: Retrieve current balance of an account
+      parameters:
+      - description: Account number
+        in: path
+        name: no_rekening
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SaldoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get account balance
+      tags:
+      - accounts
+  /api/accounts/tabung:
+    post:
+      consumes:
+      - application/json
+      description: Deposit money into an account
+      parameters:
+      - description: Deposit details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.TabungTarikRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SaldoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Deposit money
+      tags:
+      - transactions
+  /api/accounts/tarik:
+    post:
+      consumes:
+      - application/json
+      description: Withdraw money from an account
+      parameters:
+      - description: Withdrawal details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.TabungTarikRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SaldoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Withdraw money
+      tags:
+      - transactions
   /api/auth/login:
     post:
       consumes:

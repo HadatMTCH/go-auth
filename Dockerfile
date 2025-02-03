@@ -1,10 +1,13 @@
 # Build stage
-FROM golang:1.23.3-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install build dependencies and netcat for health check
 RUN apk add --no-cache git make
+
+# Install goose
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # Copy dependency files first
 COPY go.mod go.sum ./
@@ -13,24 +16,30 @@ RUN go mod download
 # Copy all source files
 COPY . .
 
-# Build binary using root main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/main main.go
+# Build binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" \
+    -o /app/main main.go
 
 # Final stage
 FROM alpine:3.18
 
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata netcat-openbsd
+
 WORKDIR /app
 
-# Copy built binary and configs
+# Copy goose binary from builder
+COPY --from=builder /go/bin/goose /usr/local/bin/
+
+# Copy other files
 COPY --from=builder /app/main .
+COPY --from=builder /app/.env.yml .
 COPY --from=builder /app/config ./config
 COPY --from=builder /app/migrations ./migrations
 
-# Create log directory
-RUN mkdir -p /var/log/app
-VOLUME /var/log/app
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
-EXPOSE 8080
-
-# Run with serve-http command
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["./main", "serve-http"]
